@@ -20,6 +20,7 @@ import com.nextflix.app.seriesDetails.domain.repository.SeriesDetailsRepository
 import com.nextflix.app.seriesList.data.local.series.SeriesDatabase
 import com.nextflix.app.seriesList.utils.Resource
 import com.nextflix.app.watchLater.data.model.WatchLaterSeries
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.Flow
@@ -193,7 +194,7 @@ class SeriesDetailsRepositoryImpl @Inject constructor(
             )
 
             //change value in room
-            seriesDatabase.seriesDao.addToWatchLater(seriesId)
+            seriesDatabase.seriesDao.addToWatchLater(seriesId, client.auth.currentUserOrNull()?.id.toString())
 
             Log.d("SaveWatchLater123", "Row added to WatchLater successfully!")
             Result.success(Unit)  // Explicitly return success
@@ -213,7 +214,7 @@ class SeriesDetailsRepositoryImpl @Inject constructor(
             }
 
             //change value in room
-            seriesDatabase.seriesDao.removeFromWatchLater(seriesId)
+            seriesDatabase.seriesDao.removeFromWatchLater(seriesId, client.auth.currentUserOrNull()?.id.toString())
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -326,7 +327,7 @@ class SeriesDetailsRepositoryImpl @Inject constructor(
             )
 
             //change value in room
-            seriesDatabase.seriesDao.addToWatchLater(seriesId)
+            seriesDatabase.seriesDao.addToWatchLater(seriesId, client.auth.currentUserOrNull()?.id.toString())
 
             Result.success(Unit)  // Explicitly return success
 

@@ -59,7 +59,9 @@ fun HomeScreen(
 //    }
 
     LaunchedEffect(Unit) {
-        viewModel.initializeData() // Ensures it's called only once
+        //viewModel.initializeData() // Ensures it's called only once
+        viewModel.getSeries(false)
+        viewModel.getUserSeries()
     }
 
 

@@ -71,7 +71,8 @@ class MainActivity : ComponentActivity() {
                     ) {
                         MainScreen(
                             seriesListViewModel = seriesListViewModel,
-                            navController = navController
+                            navController = navController,
+                            authenticationViewModel = authenticationViewModel
                         )
                     }
 

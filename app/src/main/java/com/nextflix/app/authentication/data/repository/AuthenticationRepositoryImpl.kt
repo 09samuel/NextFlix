@@ -3,6 +3,7 @@ package com.nextflix.app.authentication.data.repository
 //import io.github.jan.supabase.gotrue.gotrue
 
 import android.content.Context
+import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
@@ -29,13 +30,19 @@ class AuthenticationRepositoryImpl @Inject constructor(
 
     override suspend fun saveToken(): Result<Unit> {
         return try {
-            val accessToken = client.auth.currentAccessTokenOrNull()
+            val session = client.auth.currentSessionOrNull()
+            val accessToken = session?.accessToken
+            val refreshToken = session?.refreshToken
+
             sharedPref.saveStringData("accessToken", accessToken)
+            sharedPref.saveStringData("refreshToken", refreshToken)
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
 
     override suspend fun getToken(): Flow<Resource<String?>> {
         return flow {
@@ -47,8 +54,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
 
     override suspend fun logout(): Result<Unit> {
         return try {
-            
             client.auth.signOut()
+            sharedPref.clearPreferences()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -103,4 +110,28 @@ class AuthenticationRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun refreshSession() :Result<Unit>{
+        return try {
+            val refreshToken = sharedPref.getStringData("refreshToken") // Retrieve refresh token from storage
+
+            if (!refreshToken.isNullOrEmpty()) {
+                client.auth.refreshSession(refreshToken) // Pass refresh token explicitly
+                val newAccessToken = client.auth.currentAccessTokenOrNull()
+                val newRefreshToken = client.auth.currentSessionOrNull()?.refreshToken
+
+                // Save new tokens in SharedPreferences
+                sharedPref.saveStringData("accessToken", newAccessToken)
+                sharedPref.saveStringData("refreshToken", newRefreshToken)
+                Result.success(Unit)
+            } else {
+                Log.e("Auth", "No refresh token found, user might need to re-login.")
+                Result.failure(Exception("No refresh token found, user might need to re-login."))
+            }
+        } catch (e: Exception) {
+            Log.e("Auth", "Session refresh failed: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
 }

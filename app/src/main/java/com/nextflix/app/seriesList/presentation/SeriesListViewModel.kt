@@ -73,7 +73,7 @@ class SeriesListViewModel @Inject constructor(
         }
     }
 
-    private fun getSeries(forceFetchFromRemote: Boolean) {
+     fun getSeries(forceFetchFromRemote: Boolean) {
         viewModelScope.launch {
             _seriesListState.update {
                 it.copy(isSeriesLoading = true)
@@ -95,9 +95,10 @@ class SeriesListViewModel @Inject constructor(
                             result.data?.let { sList ->
                                 _seriesListState.update {
                                     it.copy(
-                                        seriesList = seriesListState.value.seriesList
+                                        seriesList =
+                                        //seriesListState.value.seriesList
                                                 //+ sList.shuffled(),
-                                                + sList,
+                                                sList,
                                         seriesListPage = seriesListState.value.seriesListPage + 1
                                     )
                                 }
@@ -115,7 +116,7 @@ class SeriesListViewModel @Inject constructor(
         }
     }
 
-    private fun getUserSeries() {
+     fun getUserSeries() {
         viewModelScope.launch {
             _seriesListState.update {
                 it.copy(isUserSeriesLoading = true)

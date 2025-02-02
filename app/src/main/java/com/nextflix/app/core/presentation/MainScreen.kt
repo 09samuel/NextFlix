@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Upcoming
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,6 +34,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.nextflix.app.authentication.presentation.AuthenticationViewModel
+import com.nextflix.app.authentication.presentation.ProfileScreen
 import com.nextflix.app.seriesList.presentation.HomeScreen
 import com.nextflix.app.seriesList.presentation.SeriesListUiEvent
 import com.nextflix.app.seriesList.presentation.SeriesListViewModel
@@ -43,7 +46,7 @@ import com.nextflix.app.upcoming.presentation.UpcomingEpisodesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostController) {
+fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostController, authenticationViewModel: AuthenticationViewModel) {
     //val seriesListViewModel = hiltViewModel<SeriesListViewModel>()
     val seriesListState = seriesListViewModel.seriesListState.collectAsState().value
     val seriesListOnEvent = seriesListViewModel::onEvent
@@ -53,6 +56,8 @@ fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostC
         upcomingEpisodesViewModel.upcomingEpisodesState.collectAsState().value
     val upcomingEpisodesOnEvent = upcomingEpisodesViewModel::onEvent
 
+    //val authenticationViewModel = hiltViewModel<AuthenticationViewModel>()
+    //val authenticationOnEvent = authenticationViewModel::onEvent
 
     val selected = rememberSaveable {
         mutableIntStateOf(0)
@@ -63,7 +68,8 @@ fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostC
     val bottomNavItems = remember {
         listOf(
             BottomItem("Series", Icons.AutoMirrored.Filled.List),
-            BottomItem("Upcoming", Icons.Filled.Upcoming)
+            BottomItem("Upcoming", Icons.Filled.Upcoming),
+            BottomItem("Profile", Icons.Filled.Person)
         )
     }
 
@@ -105,6 +111,12 @@ fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostC
                                 bottomNavController.popBackStack()
                                 bottomNavController.navigate("upcoming_episodes_screen")
                             }
+
+                            2 -> {
+                                //upcomingEpisodesOnEvent(UpcomingEpisodesUiEvent.Navigate)
+                                bottomNavController.popBackStack()
+                                bottomNavController.navigate("profile_screen")
+                            }
                         }
                     },
                     icon = {
@@ -126,7 +138,6 @@ fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostC
             NavHost(
                 navController = bottomNavController,
                 startDestination = "home_screen"
-                //startDestination = "series_screen"
             ) {
                 composable(
 //                        exitTransition = {
@@ -176,6 +187,24 @@ fun MainScreen(seriesListViewModel: SeriesListViewModel, navController: NavHostC
                     UpcomingEpisodesScreen(
                         upcomingEpisodesState = upcomingEpisodesState,
                         //upcomingEpisodesViewModel::onEvent,
+                        navController = navController
+                    )
+                }
+
+                composable(enterTransition = {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        tween(400)
+                    ) + fadeIn()
+                }, popExitTransition = {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        tween(400)
+                    ) + fadeOut()
+                }, route = "profile_screen") { backStackEntry ->
+                    ProfileScreen(
+                        authenticationViewModel = authenticationViewModel,
+                        onEvent = authenticationViewModel::onEvent,
                         navController = navController
                     )
                 }

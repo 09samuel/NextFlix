@@ -21,8 +21,8 @@ class AuthenticationViewModel @Inject constructor(
     private var _authenticationState = MutableStateFlow(AuthenticationState())
     val authenticationState = _authenticationState.asStateFlow()
 
-    init{
-        isUserLoggedIn()
+    init {
+        //isUserLoggedIn()
     }
 
     fun onEvent(event: AuthenticationUiEvent) {
@@ -32,12 +32,13 @@ class AuthenticationViewModel @Inject constructor(
             }
 
             AuthenticationUiEvent.OnLaunch -> {
-                isUserLoggedIn()
+                //isUserLoggedIn()
             }
 
             AuthenticationUiEvent.OnLogoutClicked -> {
                 logout()
             }
+
         }
     }
 
@@ -55,15 +56,15 @@ class AuthenticationViewModel @Inject constructor(
                     _authenticationState.update {
                         it.copy(isLoading = false, error = null, isLogin = true)
                     }
-                }  else{
+                } else {
                     _authenticationState.update {
-                        it.copy(isLoading = false, error = "Falied to sign in", isLogin = true)
+                        it.copy(isLoading = false, error = "Falied to sign in", isLogin = false)
                     }
                 }
 
             } else {
                 _authenticationState.update {
-                    it.copy(isLoading = false, error = "Failed to sign in")
+                    it.copy(isLoading = false, error = "Failed to sign in", isLogin = false)
                 }
             }
         }
@@ -78,8 +79,7 @@ class AuthenticationViewModel @Inject constructor(
             val logOutResult = authenticationRepository.logout()
             if (logOutResult.isSuccess) {
                 _authenticationState.update {
-                    authenticationRepository.saveToken()
-                    it.copy(isLoading = false, error = null, isLogin = false)
+                    it.copy(isLoading = false, error = null, isLogin = false, accessToken = null, userId = null)
                 }
             } else {
                 _authenticationState.update {
@@ -89,36 +89,53 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    private fun isUserLoggedIn() {
+//    fun isUserLoggedIn() {
+//        viewModelScope.launch {
+//            _authenticationState.update {
+//                it.copy(isLoading = true)
+//            }
+//
+//
+//        }
+//    }
+
+    fun refreshSessionOnAppResume() {
         viewModelScope.launch {
             _authenticationState.update {
                 it.copy(isLoading = true)
             }
-
-            authenticationRepository.getToken().collectLatest { result ->
-                when (result) {
-                    is Resource.Error -> {
-                        _authenticationState.update {
-                            it.copy(isLoading = false, error = result.message)
-                        }
-                    }
-
-                    is Resource.Loading -> {
-                        _authenticationState.update {
-                            it.copy(isLoading = result.isLoading)
-                        }
-                    }
-
-                    is Resource.Success -> {
-                        result.data?.let { token ->
+            val result = authenticationRepository.refreshSession()
+            if (result.isSuccess) {
+                authenticationRepository.getToken().collectLatest { result ->
+                    when (result) {
+                        is Resource.Error -> {
                             _authenticationState.update {
-                                it.copy(accessToken = token, isLogin = true, )
+                                it.copy(isLoading = false, error = result.message)
+                            }
+                        }
+
+                        is Resource.Loading -> {
+                            _authenticationState.update {
+                                it.copy(isLoading = result.isLoading)
+                            }
+                        }
+
+                        is Resource.Success -> {
+                            result.data?.let { token ->
+                                _authenticationState.update {
+                                    it.copy(accessToken = token, isLogin = true, isLoading = false, error = null)
+                                }
                             }
                         }
                     }
                 }
+            } else {
+                _authenticationState.update {
+                    it.copy(isLoading = false)
+                }
             }
         }
     }
+
 }
 

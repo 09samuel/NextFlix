@@ -9,5 +9,6 @@ interface AuthenticationRepository {
     suspend fun getToken(): Flow<Resource<String?>>
     suspend fun logout(): Result<Unit>
     suspend fun loginWithGoogle(context: Context): Result<Unit>
+    suspend fun refreshSession(): Result<Unit>
 }
 

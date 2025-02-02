@@ -31,13 +31,13 @@ class SeriesListRepositoryImpl @Inject constructor(
         return flow {
             emit(Resource.Loading(true))
 
-            val localSeriesList = seriesDatabase.seriesDao.getLocalSeries()
+            val localSeriesList = seriesDatabase.seriesDao.getLocalSeries(client.auth.currentUserOrNull()?.id.toString())
 
+            Log.e("series123",localSeriesList.toString())
             //if room is empty only then get from api
             val shouldLoadLocalSeries = localSeriesList.isNotEmpty() && !forceFetchFromRemote
 
             if (shouldLoadLocalSeries) {
-                Log.i("check123", "yyy")
                 emit(Resource.Success(data = localSeriesList.map { seriesEntity ->
                     seriesEntity.toSeries()
                 }))
@@ -79,7 +79,7 @@ class SeriesListRepositoryImpl @Inject constructor(
             }
 
             val seriesEntities = seriesListFromApi.results.map { seriesDto ->
-                val seriesEntity = seriesDto.toSeriesEntity()
+                val seriesEntity = seriesDto.toSeriesEntity(client.auth.currentUserOrNull()?.id.toString())
                 seriesEntity.watch_later =
                     watchLaterSeriesIds.contains(seriesEntity.id) // Set watchLater flag
                 seriesEntity
@@ -150,16 +150,28 @@ class SeriesListRepositoryImpl @Inject constructor(
 
             Log.e("ser125", searchListFromApi.toString())
 
-            emit(
-                Resource.Success(
-                    searchListFromApi.results.map {
-                        it.toSeries()
-                    }.sortedByDescending {
-                        it.vote_count
-                    }
-                )
-            )
+            val watchLaterSeriesIds = try {
+                val response = client.from("WatchLater")
+                    .select(Columns.list("series_id"))
+                    .decodeList<Map<String, Int>>() // Decode as a list of maps
+
+                // Extract the "series_id" values into a list of integers
+                response.map { it["series_id"] ?: -1 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emit(Resource.Error(message = "Error loading shows"))
+                return@flow
+            }
+
+            val seriesList = searchListFromApi.results.map { seriesDto ->
+                val series = seriesDto.toSeries()
+                series.copy(watch_later = series.id in watchLaterSeriesIds) // Set watch_later based on ID presence
+            }.sortedByDescending { it.vote_count }
+
+            emit(Resource.Success(seriesList))
             emit(Resource.Loading(false))
+
+
         }
     }
 
@@ -179,7 +191,7 @@ class SeriesListRepositoryImpl @Inject constructor(
             )
 
             //change value in room
-            seriesDatabase.seriesDao.addToWatchLater(seriesId)
+            seriesDatabase.seriesDao.addToWatchLater(seriesId, client.auth.currentUserOrNull()?.id.toString())
 
             Log.d("SaveWatchLater123", "Row added to WatchLater successfully!")
             Result.success(Unit)  // Explicitly return success
@@ -195,11 +207,12 @@ class SeriesListRepositoryImpl @Inject constructor(
             client.from("WatchLater").delete {
                 filter {
                     eq("series_id", seriesId)
+                    //Series::id eq seriesId
                 }
             }
 
             //change value in room
-            seriesDatabase.seriesDao.removeFromWatchLater(seriesId)
+            seriesDatabase.seriesDao.removeFromWatchLater(seriesId, client.auth.currentUserOrNull()?.id.toString())
 
             Result.success(Unit)
         } catch (e: Exception) {

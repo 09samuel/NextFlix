@@ -6,8 +6,9 @@ import com.nextflix.app.seriesList.domain.model.Series
 import com.nextflix.app.seriesList.domain.model.WatchLaterEntry
 import com.nextflix.app.watchLater.data.model.WatchLaterSeries
 
-fun SeriesDto.toSeriesEntity(): SeriesEntity {
+fun SeriesDto.toSeriesEntity(userId: String): SeriesEntity {
     return SeriesEntity(
+        userId = userId,
         adult = adult ?: false,
         backdrop_path = backdrop_path ?: "",
         first_air_date = first_air_date ?: "",

@@ -1,8 +1,6 @@
 package com.nextflix.app.authentication.presentation
 
-
 import android.annotation.SuppressLint
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,19 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.nextflix.app.R
 import io.github.jan.supabase.annotations.SupabaseExperimental
 
 @SuppressLint("SuspiciousIndentation")
-@OptIn(SupabaseExperimental::class)
+
 @Composable
-fun LoginScreen(
+fun ProfileScreen(
     authenticationViewModel: AuthenticationViewModel,
     onEvent: (AuthenticationUiEvent) -> Unit,
     navController: NavHostController
@@ -41,22 +35,14 @@ fun LoginScreen(
     // Observe authentication state from the ViewModel
     val authenticationState = authenticationViewModel.authenticationState.collectAsState()
 
-    val context = LocalContext.current
-
     LaunchedEffect(authenticationState.value.isLogin) {
-        if (authenticationState.value.isLogin) {
-            navController.navigate("main_screen") {
-                popUpTo("login_screen") { inclusive = true } // Clear login screen from backstack
+        if (!authenticationState.value.isLogin) {
+            navController.navigate("login_screen") {
+                popUpTo(0) { inclusive = true } // Clears all previous screens
             }
         }
     }
 
-    LaunchedEffect(Unit) {
-        authenticationViewModel.refreshSessionOnAppResume()
-    }
-
-
-    val googleIcon: Painter = painterResource(id = R.drawable.ic_google_logo)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -64,7 +50,7 @@ fun LoginScreen(
             .alpha(if (authenticationState.value.isLoading) 0.5f else 1f),
     ) {
         Button(
-            onClick = { onEvent(AuthenticationUiEvent.OnLoginWithGoogleClicked(context = context)) },
+            onClick = { onEvent(AuthenticationUiEvent.OnLogoutClicked) },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
@@ -86,22 +72,16 @@ fun LoginScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    // Google Icon
-                    Image(
-                        painter = googleIcon,
-                        contentDescription = "Google Logo",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(end = 8.dp)
-                    )
+
 
                     // Text
                     Text(
-                        text = "Sign Up with Google",
+                        text = "Logout",
                         fontSize = 16.sp,
                         color = Color.Black
                     )
                 }
+
             }
         }
     }

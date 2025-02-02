@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class SeriesEntity(
+    val userId: String,
     val adult: Boolean,
     val backdrop_path: String,
     val first_air_date: String,

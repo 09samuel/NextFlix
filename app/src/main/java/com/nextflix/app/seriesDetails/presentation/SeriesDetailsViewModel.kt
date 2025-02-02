@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nextflix.app.seriesDetails.domain.repository.SeriesDetailsRepository
+import com.nextflix.app.seriesList.presentation.SeriesListState
 import com.nextflix.app.seriesList.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ class SeriesDetailsViewModel @Inject constructor(
 
     private var _detailsState = MutableStateFlow(SeriesDetailsState())
     val detailsState = _detailsState.asStateFlow()
+
 
     init {
         if (seriesId != null) {
